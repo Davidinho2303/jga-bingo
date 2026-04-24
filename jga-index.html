@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JGA Bingo</title>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey:            "AIzaSyBol-2BStBUTT7Tj65v_aqMVjaOFq-oBNg",
+      authDomain:        "jga-bingo-49576.firebaseapp.com",
+      projectId:         "jga-bingo-49576",
+      storageBucket:     "jga-bingo-49576.firebasestorage.app",
+      messagingSenderId: "292525985594",
+      appId:             "1:292525985594:web:0c74e3ff2d4b2a322a8a03"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+
+    // ── Felder ────────────────────────────────────────────────────────────────
+    const CAT1 = [
+      { text: 'Hannes verliert Teile vom Drehzeug',                       type: 'cat1' },
+      { text: 'Hannes schlägt Schnaps vor',                               type: 'cat1' },
+      { text: 'Hannes bestellt dasselbe wie jemand anderes',              type: 'cat1' },
+      { text: 'Hannes erwähnt die Hochzeit ungefragt',                    type: 'cat1' },
+      { text: 'Hannes schreibt seiner Freundin während einer Aktivität',  type: 'cat1' },
+      { text: 'Hannes behauptet er ist noch nüchtern',                    type: 'cat1' },
+      { text: 'Hannes sagt "das war meine Idee"',                         type: 'cat1' },
+      { text: 'Hannes sagt "ich muss morgen früh fit sein"',              type: 'cat1' },
+      { text: 'Hannes kennt zufällig jemanden',                           type: 'cat1' },
+      { text: 'Hannes verliert kurz sein Handy',                          type: 'cat1' },
+      { text: 'Hannes lacht am lautesten im Raum',                        type: 'cat1' },
+      { text: 'Hannes erzählt eine peinliche Anekdote',                   type: 'cat1' },
+      { text: 'Hannes umarmt jemanden den er kaum kennt',                 type: 'cat1' },
+      { text: 'Hannes nimmt eine Aktivität zu ernst',                     type: 'cat1' },
+      { text: 'Hannes sagt "früher war das anders"',                      type: 'cat1' },
+      { text: 'Hannes zögert bei Entscheidung >30 Sek.',                  type: 'cat1' },
+      { text: 'Hannes macht Selfie ohne zu fragen',                       type: 'cat1' },
+      { text: 'Hannes trägt Taucherbrille freiwillig länger als nötig',   type: 'cat1' },
+    ];
+    const CAT2 = [
+      { text: 'Hannes trägt die Taucherbrille beim Fußballgolf',          type: 'cat2' },
+      { text: 'Hannes zieht die Stoppersocken an',                        type: 'cat2' },
+      { text: 'Hannes spielt eine Bahn in der Badehose',                  type: 'cat2' },
+      { text: 'Hannes trägt Schienbeinschoner beim Bowling',              type: 'cat2' },
+      { text: 'Hannes gibt zu beim Bowling verloren zu haben',            type: 'cat2' },
+      { text: 'Hannes gibt zu beim Fußballgolf verloren zu haben',        type: 'cat2' },
+      { text: 'Hannes tanzt beim Abendessen vor allen',                   type: 'cat2' },
+      { text: 'Hannes macht Foto mit einer fremden Person',               type: 'cat2' },
+      { text: 'Hannes bestellt was er sonst nie trinken würde',           type: 'cat2' },
+      { text: 'Hannes zeigt sein Handydisplay für 10 Sek.',               type: 'cat2' },
+      { text: 'Hannes ruft laut den Gruppen-Schlachtruf',                 type: 'cat2' },
+      { text: 'Hannes gibt seine größte Macke zu',                        type: 'cat2' },
+      { text: 'Hannes trägt jemanden 20 Meter auf dem Rücken',            type: 'cat2' },
+      { text: 'Hannes nennt seinen peinlichsten Moment des Jahres',       type: 'cat2' },
+      { text: 'Hannes macht eine Bahn Fußballgolf mit verbundenen Augen', type: 'cat2' },
+      { text: 'Hannes sagt jemandem spontan etwas Nettes',                type: 'cat2' },
+      { text: 'Hannes singt eine falsche Liedzeile den ganzen Abend',     type: 'cat2' },
+      { text: 'Hannes bestellt Essen für alle ohne zu fragen',            type: 'cat2' },
+    ];
+    const CAT3 = [
+      { text: 'Du machst das erste Hole in One',                          type: 'cat3' },
+      { text: 'Strike beim Bowling',                                      type: 'cat3' },
+      { text: 'Zwei Strikes hintereinander',                              type: 'cat3' },
+      { text: 'Schönster Schuss beim Fußballgolf (Abstimmung)',           type: 'cat3' },
+      { text: 'Schlechtester Schuss des Tages (Trostpreis)',              type: 'cat3' },
+      { text: 'Erster Shot des Tages ohne Grimasse',                      type: 'cat3' },
+      { text: 'Ersten Platz in einer Aktivität',                          type: 'cat3' },
+      { text: 'Letzten Platz in einer Aktivität',                         type: 'cat3' },
+      { text: 'Fremden anlachen und zurückbekommen',                      type: 'cat3' },
+      { text: 'Bestes Foto des Tages (Gruppenabstimmung)',                type: 'cat3' },
+      { text: 'Jemanden zum Lachen bringen ohne selbst zu lachen',        type: 'cat3' },
+      { text: 'Eine Runde auf Kosten von jemand anderem',                 type: 'cat3' },
+      { text: 'Den ganzen Tag keinen Schluck Wasser trinken',             type: 'cat3' },
+      { text: 'Als Erster am Fußballgolf-Abschlag',                       type: 'cat3' },
+      { text: 'Abend mit vollem Handyakku überstehen',                    type: 'cat3' },
+      { text: 'Bollerwagen schieben ohne zu verschütten',                 type: 'cat3' },
+      { text: 'Kommentar der alle gleichzeitig zum Lachen bringt',        type: 'cat3' },
+      { text: 'Beim Bowling eine 9 ohne Strike',                          type: 'cat3' },
+    ];
+    const ALL_FIELDS = [...CAT1, ...CAT2, ...CAT3];
+
+    function isHannesName(name) {
+      const n = name.trim().toLowerCase();
+      return n === 'hannes' || n === 'hannezzo' || n === 'hanezzo';
+    }
+
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function generateCard(hannes) {
+      const pool = hannes ? CAT3 : ALL_FIELDS;
+      const picked = shuffle(pool).slice(0, 24);
+      picked.splice(12, 0, { text: '🍺 FREI', type: 'free' });
+      return picked;
+    }
+
+    function checkBingo(markedSet) {
+      const lines = [
+        [0,1,2,3,4],[5,6,7,8,9],[10,11,12,13,14],[15,16,17,18,19],[20,21,22,23,24],
+        [0,5,10,15,20],[1,6,11,16,21],[2,7,12,17,22],[3,8,13,18,23],[4,9,14,19,24],
+        [0,6,12,18,24],[4,8,12,16,20]
+      ];
+      return lines.some(l => l.every(i => markedSet.has(i)));
+    }
+
+    // ── Firebase ──────────────────────────────────────────────────────────────
+    async function createSession() {
+      const id = Math.random().toString(36).slice(2, 8).toUpperCase();
+      await setDoc(doc(db, 'sessions', id), { created: Date.now() });
+      return id;
+    }
+
+    async function sessionExists(id) {
+      const snap = await getDoc(doc(db, 'sessions', id));
+      return snap.exists();
+    }
+
+    async function joinSession(sessionId, playerName) {
+      const hannes = isHannesName(playerName);
+      const playerDoc = await getDoc(doc(db, 'sessions', sessionId, 'players', playerName));
+      if (playerDoc.exists()) {
+        // Returning player – load existing card
+        return playerDoc.data();
+      }
+      // New player – generate and save card
+      const card = generateCard(hannes);
+      const data = { card, isHannes: hannes, marked: [12], joined: Date.now() };
+      await setDoc(doc(db, 'sessions', sessionId, 'players', playerName), data);
+      return data;
+    }
+
+    async function saveMarked(sessionId, playerName, marked) {
+      await setDoc(doc(db, 'sessions', sessionId, 'players', playerName), { marked }, { merge: true });
+    }
+
+    // ── State & Routing ───────────────────────────────────────────────────────
+    function getSessionId() { return window.location.hash.slice(1) || null; }
+    function setSessionId(id) { window.location.hash = id; }
+
+    let state = {
+      screen: 'loading', // loading | setup | join | game | bingo
+      sessionId: null,
+      myName: null,
+      myCard: null,
+      marked: new Set([12]),
+    };
+
+    // ── Render helpers ────────────────────────────────────────────────────────
+    const TYPE_COLOR = {
+      cat1: { on: 'linear-gradient(135deg,#ec4899,#be185d)', dot: '#ec4899' },
+      cat2: { on: 'linear-gradient(135deg,#f59e0b,#b45309)', dot: '#f59e0b' },
+      cat3: { on: 'linear-gradient(135deg,#6366f1,#4338ca)', dot: '#6366f1' },
+      free: { on: 'linear-gradient(135deg,#22c55e,#15803d)', dot: '#22c55e' },
+    };
+
+    function el(tag, css, text) {
+      const e = document.createElement(tag);
+      if (css)  e.style.cssText = css;
+      if (text !== undefined) e.textContent = text;
+      return e;
+    }
+
+    function gradTitle(text, size) {
+      const d = el('div', `font-family:Impact,sans-serif;font-size:${size||'clamp(28px,7vw,54px)'};
+        letter-spacing:.08em;margin:0 0 4px;
+        background:linear-gradient(90deg,#f59e0b,#ec4899,#6366f1);
+        -webkit-background-clip:text;-webkit-text-fill-color:transparent;text-align:center`, text);
+      return d;
+    }
+
+    function nameInput(placeholder, btnText, onSubmit) {
+      const wrap = el('div', 'display:flex;flex-direction:column;gap:10px;width:100%;max-width:300px');
+      const input = document.createElement('input');
+      input.placeholder = placeholder;
+      input.style.cssText = `width:100%;box-sizing:border-box;background:rgba(255,255,255,0.07);
+        border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:14px 16px;
+        color:#e2e8f0;font-size:16px;outline:none;font-family:Georgia,serif;text-align:center`;
+      const btn = el('button', `width:100%;padding:13px;border-radius:10px;border:none;
+        background:linear-gradient(135deg,#f59e0b,#ec4899);color:#fff;font-weight:800;
+        font-size:15px;cursor:pointer;letter-spacing:.05em;font-family:Impact,sans-serif`, btnText);
+      const err = el('div', 'color:#f87171;font-size:12px;text-align:center;min-height:16px', '');
+      btn.addEventListener('click', () => onSubmit(input.value.trim(), err));
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') onSubmit(input.value.trim(), err); });
+      wrap.appendChild(input);
+      wrap.appendChild(btn);
+      wrap.appendChild(err);
+      return { wrap, input };
+    }
+
+    function cardCell(field, idx, markedSet) {
+      const on = markedSet.has(idx);
+      const tc = TYPE_COLOR[field.type] || TYPE_COLOR.cat3;
+      const div = el('div', `
+        aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+        text-align:center;padding:3px;border-radius:6px;
+        font-size:clamp(6px,1.15vw,10px);font-weight:${on?700:400};
+        cursor:${field.type==='free'?'default':'pointer'};
+        user-select:none;transition:all .15s;line-height:1.2;
+        background:${on ? tc.on : 'rgba(255,255,255,0.05)'};
+        color:${on?'#fff':'#64748b'};
+        border:${on?'none':'1px solid rgba(255,255,255,0.07)'};
+        box-shadow:${on?`0 2px 12px ${tc.dot}44`:'none'};
+        position:relative;overflow:hidden;`);
+      if (!on && field.type !== 'free') {
+        const dot = el('div', `position:absolute;top:3px;left:3px;width:4px;height:4px;
+          border-radius:50%;background:${tc.dot};opacity:.6`);
+        div.appendChild(dot);
+      }
+      const span = el('span', 'position:relative;z-index:1', field.text);
+      div.appendChild(span);
+      if (field.type !== 'free') div.addEventListener('click', () => toggleField(idx));
+      return div;
+    }
+
+    async function toggleField(idx) {
+      const s = new Set(state.marked);
+      s.has(idx) ? s.delete(idx) : s.add(idx);
+      state.marked = s;
+      await saveMarked(state.sessionId, state.myName, [...s]);
+      if (checkBingo(s)) state.screen = 'bingo';
+      render();
+    }
+
+    // ── Screens ───────────────────────────────────────────────────────────────
+    function render() {
+      const root = document.getElementById('root');
+      root.innerHTML = '';
+      ({ loading: renderLoading, setup: renderSetup, join: renderJoin,
+         game: renderGame, bingo: renderBingo }[state.screen] || renderLoading)(root);
+    }
+
+    const darkBg = `min-height:100vh;background:linear-gradient(160deg,#06060e 0%,#0d0920 60%,#06060e 100%);
+      font-family:Georgia,serif;display:flex;flex-direction:column;align-items:center;
+      justify-content:center;padding:20px;color:#e2e8f0`;
+
+    function renderLoading(root) {
+      const wrap = el('div', 'text-align:center');
+      wrap.appendChild(el('div', 'font-size:44px;margin-bottom:12px', '🎰'));
+      wrap.appendChild(gradTitle('JGA BINGO'));
+      wrap.appendChild(el('div', 'color:#475569;margin-top:16px;font-size:13px', 'Laden…'));
+      root.appendChild(wrap);
+    }
+
+    // ── SETUP (Ersteller) ─────────────────────────────────────────────────────
+    function renderSetup(root) {
+      const wrap = el('div', 'text-align:center;width:100%;max-width:360px');
+      wrap.appendChild(el('div', 'font-size:42px;margin-bottom:6px', '🎰'));
+      wrap.appendChild(gradTitle('JGA BINGO'));
+      wrap.appendChild(el('div', 'color:#475569;margin-bottom:28px;font-size:12px',
+        'Hannes wird diesen Tag nicht vergessen'));
+
+      const card = el('div', `background:rgba(255,255,255,0.03);border-radius:16px;padding:24px;
+        border:1px solid rgba(255,255,255,0.07);width:100%;box-sizing:border-box`);
+
+      card.appendChild(el('div', 'font-size:11px;color:#475569;letter-spacing:2px;margin-bottom:12px',
+        'DEIN NAME'));
+
+      const { wrap: nw, input } = nameInput('Wie heißt du?', 'SPIEL ERSTELLEN 🎲', async (name, err) => {
+        if (!name) { err.textContent = 'Bitte einen Namen eingeben'; return; }
+        err.textContent = '';
+        input.disabled = true;
+        nw.querySelector('button').textContent = 'Erstelle Session…';
+        nw.querySelector('button').disabled = true;
+        const sessionId = await createSession();
+        setSessionId(sessionId);
+        const data = await joinSession(sessionId, name);
+        state.sessionId = sessionId;
+        state.myName = name;
+        state.myCard = data.card;
+        state.marked = new Set(data.marked || [12]);
+        state.screen = 'game';
+        render();
+      });
+      card.appendChild(nw);
+      wrap.appendChild(card);
+      root.appendChild(wrap);
+      setTimeout(() => input.focus(), 100);
+    }
+
+    // ── JOIN (Andere Spieler) ─────────────────────────────────────────────────
+    function renderJoin(root) {
+      const wrap = el('div', 'text-align:center;width:100%;max-width:360px');
+      wrap.appendChild(el('div', 'font-size:42px;margin-bottom:6px', '🎰'));
+      wrap.appendChild(gradTitle('JGA BINGO'));
+      wrap.appendChild(el('div', 'color:#475569;margin-bottom:28px;font-size:12px',
+        'Du wurdest zum JGA Bingo eingeladen'));
+
+      const card = el('div', `background:rgba(255,255,255,0.03);border-radius:16px;padding:24px;
+        border:1px solid rgba(255,255,255,0.07);width:100%;box-sizing:border-box`);
+
+      card.appendChild(el('div', 'font-size:11px;color:#475569;letter-spacing:2px;margin-bottom:12px',
+        'DEIN NAME'));
+
+      const { wrap: nw, input } = nameInput('Wie heißt du?', 'MITSPIELEN 🎯', async (name, err) => {
+        if (!name) { err.textContent = 'Bitte einen Namen eingeben'; return; }
+        err.textContent = '';
+        input.disabled = true;
+        nw.querySelector('button').textContent = 'Lade Karte…';
+        nw.querySelector('button').disabled = true;
+        const data = await joinSession(state.sessionId, name);
+        state.myName = name;
+        state.myCard = data.card;
+        state.marked = new Set(data.marked || [12]);
+        state.screen = 'game';
+        render();
+      });
+      card.appendChild(nw);
+      wrap.appendChild(card);
+      root.appendChild(wrap);
+      setTimeout(() => input.focus(), 100);
+    }
+
+    // ── GAME ──────────────────────────────────────────────────────────────────
+    function renderGame(root) {
+      const markedSet = state.marked;
+      const isH = isHannesName(state.myName);
+
+      // Header
+      const hdr = el('div', 'width:100%;max-width:500px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px');
+      const backBtn = el('button', `background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.07);
+        border-radius:7px;color:#475569;padding:5px 10px;cursor:pointer;font-size:11px`, '← Neu');
+      backBtn.addEventListener('click', () => {
+        state.screen = getSessionId() ? 'join' : 'setup';
+        render();
+      });
+      const title = el('div', `font-family:Impact,sans-serif;font-size:18px;letter-spacing:.08em;
+        background:linear-gradient(90deg,#f59e0b,#ec4899,#6366f1);
+        -webkit-background-clip:text;-webkit-text-fill-color:transparent`, 'JGA BINGO');
+      const counter = el('div', `background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);
+        border-radius:7px;padding:5px 9px;font-size:11px;color:#f59e0b;font-weight:700`,
+        `${markedSet.size - 1}/24`);
+      hdr.appendChild(backBtn); hdr.appendChild(title); hdr.appendChild(counter);
+
+      // Share link box
+      const shareBox = el('div', `width:100%;max-width:500px;background:rgba(255,255,255,0.04);
+        border:1px solid rgba(255,255,255,0.08);border-radius:9px;padding:10px 14px;
+        margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;
+        box-sizing:border-box`);
+      shareBox.appendChild(el('div', 'font-size:11px;color:#475569;white-space:nowrap', '🔗 Link teilen'));
+      const copyBtn = el('button', `padding:5px 12px;border-radius:6px;border:none;
+        background:rgba(255,255,255,0.08);color:#cbd5e1;font-size:11px;cursor:pointer;white-space:nowrap`,
+        '📋 Kopieren');
+      copyBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(window.location.href);
+        copyBtn.textContent = '✓ Kopiert!';
+        setTimeout(() => copyBtn.textContent = '📋 Kopieren', 2000);
+      });
+      shareBox.appendChild(copyBtn);
+
+      // Player label
+      const lbl = el('div', 'font-size:11px;color:#475569;margin-bottom:7px;text-align:center');
+      const strong = el('strong', 'color:#cbd5e1', state.myName);
+      lbl.appendChild(strong);
+
+      // BINGO letters
+      const letters = el('div', 'display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:4px;width:100%;max-width:500px');
+      ['B','I','N','G','O'].forEach(l => {
+        letters.appendChild(el('div', `text-align:center;font-family:Impact,sans-serif;font-size:16px;
+          letter-spacing:.1em;background:linear-gradient(90deg,#f59e0b,#ec4899,#6366f1);
+          -webkit-background-clip:text;-webkit-text-fill-color:transparent`, l));
+      });
+
+      // Card grid
+      const grid = el('div', 'display:grid;grid-template-columns:repeat(5,1fr);gap:4px;width:100%;max-width:500px;margin-bottom:9px');
+      state.myCard.forEach((field, i) => grid.appendChild(cardCell(field, i, markedSet)));
+
+      // Legend
+      const legend = el('div', 'display:flex;gap:10px;font-size:10px;color:#334155;flex-wrap:wrap;justify-content:center');
+      legend.innerHTML = `<span><span style="color:#ec4899">●</span> Hannes tut's</span>
+        <span><span style="color:#f59e0b">●</span> Ihr bringt ihn dazu</span>
+        <span><span style="color:#6366f1">●</span> Jeder kann's</span>
+        <span><span style="color:#22c55e">●</span> Frei</span>`;
+
+      root.appendChild(hdr);
+      root.appendChild(shareBox);
+      root.appendChild(lbl);
+      root.appendChild(letters);
+      root.appendChild(grid);
+      root.appendChild(legend);
+    }
+
+    // ── BINGO ─────────────────────────────────────────────────────────────────
+    function renderBingo(root) {
+      root.innerHTML = `
+        <div style="text-align:center">
+          <div style="font-size:68px;margin-bottom:10px">🏆</div>
+          <div style="font-family:Impact,sans-serif;font-size:clamp(40px,12vw,76px);
+            background:linear-gradient(90deg,#f59e0b,#ec4899,#6366f1);
+            -webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:.08em">BINGO!</div>
+          <div style="font-size:19px;color:#f1f5f9;margin-bottom:4px;font-weight:700">${state.myName} gewinnt! 🎉</div>
+          <div style="color:#475569;margin-bottom:32px;font-size:13px">Hannes schmeißt eine Runde.</div>
+          <div style="display:flex;gap:9px;flex-wrap:wrap;justify-content:center">
+            <button id="continueBtn" style="padding:10px 20px;border-radius:9px;
+              border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);
+              color:#e2e8f0;cursor:pointer;font-size:13px">Weiter spielen</button>
+          </div>
+        </div>`;
+      root.querySelector('#continueBtn').addEventListener('click', () => { state.screen='game'; render(); });
+    }
+
+    // ── Boot ──────────────────────────────────────────────────────────────────
+    async function boot() {
+      render(); // show loading
+      const sessionId = getSessionId();
+      if (sessionId) {
+        const exists = await sessionExists(sessionId);
+        if (exists) {
+          state.sessionId = sessionId;
+          state.screen = 'join';
+        } else {
+          state.screen = 'setup';
+        }
+      } else {
+        state.screen = 'setup';
+      }
+      render();
+    }
+
+    boot();
+  </script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      background: linear-gradient(160deg, #06060e 0%, #0d0920 60%, #06060e 100%);
+      font-family: Georgia, serif;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+    }
+    #root {
+      width: 100%;
+      max-width: 520px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    input, button { font-family: Georgia, serif; }
+    button:hover { opacity: .88; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+</body>
+</html>
