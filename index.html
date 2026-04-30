@@ -277,14 +277,7 @@
           input.style.cssText = `flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);
             border-radius:7px;padding:8px 11px;color:#e2e8f0;font-size:13px;outline:none;font-family:Georgia,serif`;
           input.addEventListener('input', e => { names[i] = e.target.value; });
-          const isH = hannesIdx === i;
-          const hBtn = el('button', `padding:6px 9px;border-radius:7px;border:none;cursor:pointer;
-            font-size:11px;font-weight:700;white-space:nowrap;transition:all .15s;
-            background:${isH?'linear-gradient(135deg,#ec4899,#be185d)':'rgba(255,255,255,0.06)'};
-            color:${isH?'#fff':'#475569'}`, isH ? '👑 Hannes' : 'Hannes?');
-          hBtn.addEventListener('click', () => { hannesIdx = isH ? null : i; buildSetup(); });
           row.appendChild(input);
-          row.appendChild(hBtn);
           nameList.appendChild(row);
         });
         card.appendChild(nameList);
@@ -294,13 +287,10 @@
           background:linear-gradient(135deg,#f59e0b,#ec4899);color:#fff;font-weight:800;
           font-size:14px;cursor:pointer;letter-spacing:.05em;font-family:Impact,sans-serif`, 'KARTEN GENERIEREN 🎲');
         startBtn.addEventListener('click', async () => {
-          if (!hannesIdx !== null && hannesIdx === null) {
-            // no hannes selected, that's ok
-          }
           startBtn.textContent = 'Erstelle Session…';
           startBtn.disabled = true;
           const finalNames = names.slice(0, playerCount);
-          const hannesName = hannesIdx !== null ? finalNames[hannesIdx] : null;
+          const hannesName = finalNames.find(n => ['hannes','hannezzo','hanezzo'].includes(n.trim().toLowerCase())) || null;
           const { id, data } = await createSession(finalNames, hannesName);
           state.sessionId   = id;
           state.sessionData = data;
