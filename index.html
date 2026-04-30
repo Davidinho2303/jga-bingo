@@ -319,21 +319,39 @@
       wrap.appendChild(el('div', 'color:#475569;margin-bottom:24px;font-size:12px', 'Nur du siehst deine Karte'));
 
       const list = el('div', 'display:flex;flex-direction:column;gap:7px;width:100%;max-width:280px');
-      names.forEach(name => {
-        const isH = name === hannesName;
-        const btn = el('button', `padding:13px 18px;border-radius:9px;cursor:pointer;font-size:14px;
-          font-weight:600;display:flex;align-items:center;gap:9px;width:100%;
-          border:${isH?'1px solid rgba(236,72,153,0.35)':'1px solid rgba(255,255,255,0.07)'};
-          background:${isH?'rgba(236,72,153,0.08)':'rgba(255,255,255,0.04)'};color:#e2e8f0`);
-        btn.innerHTML = `<span>${isH?'👑':'🎯'}</span><span>${name}</span>${isH?'<span style="margin-left:auto;font-size:10px;color:#f9a8d4">Spezialkarte</span>':''}`;
+      names.forEach((name, i) => {
+        const row = el('div', 'display:flex;gap:6px;align-items:center;width:100%;max-width:280px');
+
+        const input = document.createElement('input');
+        input.value = name;
+        input.placeholder = `Spieler ${i+1}`;
+        input.style.cssText = `flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);
+          border-radius:9px;padding:11px 14px;color:#e2e8f0;font-size:14px;font-weight:600;
+          outline:none;font-family:Georgia,serif`;
+
+        const btn = el('button', `padding:11px 16px;border-radius:9px;border:none;cursor:pointer;
+          background:linear-gradient(135deg,#f59e0b,#ec4899);color:#fff;font-size:13px;font-weight:700;
+          white-space:nowrap`, '→');
+
         btn.addEventListener('click', async () => {
-          state.myName = name;
-          const savedMarked = await loadMarked(state.sessionId, name);
+          const chosenName = input.value.trim() || name;
+          const isNowHannes = ['hannes','hannezzo','hanezzo'].includes(chosenName.toLowerCase());
+          // Remap card from original slot name
+          if (!state.sessionData.cards[chosenName]) {
+            state.sessionData.cards[chosenName] = isNowHannes
+              ? generateCard(true)
+              : state.sessionData.cards[name];
+          }
+          state.myName = chosenName;
+          const savedMarked = await loadMarked(state.sessionId, chosenName);
           state.marked = savedMarked;
           state.screen = 'game';
           render();
         });
-        list.appendChild(btn);
+
+        row.appendChild(input);
+        row.appendChild(btn);
+        list.appendChild(row);
       });
 
       // Session ID display
@@ -381,13 +399,9 @@
 
       // player label
       const lbl = el('div', 'font-size:11px;color:#475569;margin-bottom:7px;text-align:center',
-        `${isH?'👑 ':''}Karte von `);
+        'Karte von ');
       const strong = el('strong', 'color:#cbd5e1', state.myName);
       lbl.appendChild(strong);
-      if (isH) {
-        const sp = el('span', 'color:#f9a8d4;margin-left:5px;font-size:10px', ' · Spezialkarte');
-        lbl.appendChild(sp);
-      }
 
       // BINGO letters
       const letters = el('div', 'display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:4px;width:100%;max-width:500px');
